@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Particle Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(10, 10, 10, 0.9);
+            padding: 12px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            max-width: 340px;
+            font-size: 12px;
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .color-sliders {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .color-sliders-title {
+            color: #ccc;
+            font-size: 11px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #999;
+        }
+
+        .color-slider-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .color-slider-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: space-between;
+        }
+
+        .color-slider-item label {
+            color: #ccc;
+            font-size: 11px;
+            min-width: 50px;
+        }
+
+        .color-slider-item .current-count {
+            color: #999;
+            font-size: 10px;
+            min-width: 50px;
+            text-align: left;
+            font-family: 'Courier New', monospace;
+        }
+
+        .color-slider-item input[type="range"] {
+            width: 110px;
+            flex-shrink: 0;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: #444;
+            border-radius: 3px;
+            outline: none;
+            transition: background 0.2s;
+        }
+
+        .color-slider-item input[type="range"]:hover {
+            background: #555;
+        }
+
+        .color-slider-item input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--thumb-color, #6b9);
+            cursor: pointer;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s;
+        }
+
+        .color-slider-item input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .color-slider-item input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--thumb-color, #6b9);
+            cursor: pointer;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .color-slider-item input[type="range"]::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .color-slider-item .target-count {
+            color: #ccc;
+            font-size: 10px;
+            min-width: 50px;
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+
+        .color-slider-item .max-button {
+            padding: 2px 6px;
+            background: #222;
+            border: 1px solid #444;
+            color: #999;
+            font-size: 9px;
+            font-family: inherit;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            flex-shrink: 0;
+            min-width: 28px;
+        }
+
+        .color-slider-item .max-button:hover {
+            background: #333;
+            border-color: #6b9;
+            color: #ccc;
+        }
+
+        .color-slider-item .max-button:active {
+            background: #444;
+        }
+
+        .spawn-rate-section {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .spawn-rate-title {
+            color: #999;
+            font-size: 11px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .spawn-rate-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .spawn-rate-btn {
+            padding: 6px 14px;
+            background: #222;
+            border: 1px solid #444;
+            color: #aaa;
+            font-size: 11px;
+            font-family: inherit;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        .spawn-rate-btn:hover {
+            background: #333;
+            border-color: #6b9;
+            color: #fff;
+        }
+
+        .spawn-rate-btn.active {
+            background: #6b9;
+            border-color: #6b9;
+            color: #0a0a0a;
+            box-shadow: 0 0 8px rgba(102, 187, 153, 0.3);
+        }
+
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        label {
+            color: #ccc;
+            font-size: 14px;
+            min-width: 80px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 4px;
+            background: #222;
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #6b9;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            background: #6b9;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        #particleCount {
+            color: #ddd;
+            font-size: 14px;
+            min-width: 70px;
+            text-align: right;
+        }
+
+        #spawnRateCount {
+            color: #ccc;
+            font-size: 14px;
+            min-width: 70px;
+            text-align: right;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .performance-section {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .performance-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #ccc;
+            font-size: 11px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .performance-label {
+            color: #999;
+        }
+
+        .performance-value {
+            color: #ddd;
+            font-weight: 500;
+        }
+
+        .copy-button {
+            padding: 4px 10px;
+            background: #222;
+            border: 1px solid #444;
+            color: #aaa;
+            font-size: 10px;
+            font-family: inherit;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            align-self: flex-end;
+        }
+
+        .copy-button:hover {
+            background: #333;
+            border-color: #6b9;
+            color: #fff;
+        }
+
+        .copy-button:active {
+            background: #444;
+        }
+
+        .copy-button.copied {
+            background: #6b9;
+            border-color: #6b9;
+            color: #0a0a0a;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            padding: 6px 14px;
+            background: #222;
+            border: 1px solid #444;
+            color: #aaa;
+            font-size: 11px;
+            font-family: inherit;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        button:hover {
+            background: #333;
+            border-color: #6b9;
+            color: #fff;
+        }
+
+        button:active {
+            background: #444;
+        }
+
+        button.paused {
+            background: #6b9;
+            border-color: #6b9;
+            color: #0a0a0a;
+        }
+
+        button.paused:hover {
+            background: #7ca;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particleCanvas"></canvas>
+    <div class="controls">
+        <div class="performance-section">
+            <div class="performance-row">
+                <span class="performance-label">Particles:</span>
+                <span class="performance-value" id="particleCountDisplay">0</span>
+            </div>
+            <div class="performance-row">
+                <span class="performance-label">FPS:</span>
+                <span class="performance-value" id="fpsDisplay">0</span>
+            </div>
+            <div class="performance-row">
+                <span class="performance-label">Memory:</span>
+                <span class="performance-value" id="memoryDisplay">0 MB</span>
+            </div>
+        </div>
+        <div class="color-sliders">
+            <div class="color-slider-list" id="colorSliderList"></div>
+        </div>
+        <div class="spawn-rate-section">
+            <div class="spawn-rate-buttons" id="spawnRateButtons">
+                <button id="spawnRateToggle" class="spawn-rate-btn active">1K</button>
+                <button id="fountainButton" class="spawn-rate-btn">Fountain</button>
+            </div>
+        </div>
+        <div class="button-group">
+            <button id="pauseButton">Pause</button>
+            <button id="restartButton">Restart</button>
+        </div>
+    </div>
+    <script src="particles.js"></script>
+    <script>
+        // Suppress console errors from browser extensions (these don't affect functionality)
+        const originalError = console.error;
+        console.error = function(...args) {
+            // Filter out Canvas API errors from browser extensions
+            const message = args.join(' ');
+            if (message.includes('api/v1/courses') || 
+                message.includes('Better Canvas') || 
+                (message.includes('Unexpected token') && message.includes('<!DOCTYPE'))) {
+                // Silently ignore these extension-related errors
+                return;
+            }
+            // Log other errors normally
+            originalError.apply(console, args);
+        };
+        
+        // Ensure particle system initializes even if there are extension errors
+        window.addEventListener('error', function(e) {
+            // Ignore errors from browser extensions
+            if (e.message && (
+                e.message.includes('api/v1/courses') || 
+                e.message.includes('Better Canvas') ||
+                e.message.includes('Unexpected token')
+            )) {
+                e.preventDefault();
+                return false;
+            }
+        }, true);
+    </script>
+</body>
+</html>
