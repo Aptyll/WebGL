@@ -5,7 +5,7 @@
 Built with Vanilla JavaScript and WebGL
 
 ### Memory Optimization
-- **Particle Storage**: Optimized TypedArrays
+- Particle Storage: Optimized TypedArrays
 - Positions: Float32Array (8 bytes per particle)
 - Velocities: Int16Array scaled by 1000 (4 bytes per particle)
 - Color indices: Uint8Array (1 byte per particle)
